@@ -40,14 +40,16 @@ class BaseModel:
 
             kwargs.pop('__class__', None)
 
+            # Validate attributes only for mapped classes in DBStorage
             if os.getenv('HBNB_TYPE_STORAGE') == 'db':
-                # Check for invalid attributes
-                valid_attrs = self.__class__.__mapper__.attrs.keys()
-                invalid_keys = [key for key in kwargs if key not in valid_attrs]
-                if invalid_keys:
-                    raise KeyError(
-                        f"Invalid attribute(s): {', '.join(invalid_keys)} for {self.__class__.__name__}"
-                    )
+                if hasattr(self.__class__, '__mapper__'):
+                    valid_attrs = self.__class__.__mapper__.attrs.keys()
+                    invalid_keys = [k for k in kwargs if k not in valid_attrs]
+                    if invalid_keys:
+                        error_msg = (f"Invalid attribute(s): "
+                                     f"{', '.join(invalid_keys)} for "
+                                     f"{self.__class__.__name__}")
+                        raise KeyError(error_msg)
 
             self.__dict__.update(kwargs)
 
