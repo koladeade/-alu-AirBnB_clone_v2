@@ -26,13 +26,13 @@ class BaseModel:
             storage.new(self)
         else:
             valid_attrs = ['id', 'created_at', 'updated_at', '__class__']
-            
+
             if hasattr(self.__class__, '__table__'):
                 valid_attrs.extend([
                     col.name for col in self.__class__.__table__.columns
                 ])
                 valid_attrs.append('_sa_instance_state')
-            
+
             invalid_keys = [k for k in kwargs if k not in valid_attrs]
             if invalid_keys:
                 error_msg = (
