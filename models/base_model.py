@@ -66,8 +66,7 @@ class BaseModel:
         dictionary['created_at'] = self.created_at.isoformat()
         dictionary['updated_at'] = self.updated_at.isoformat()
 
-        # Handle dynamic class ID in dictionary
-        class_name = self.__class__.__name__
-        dictionary[f"{class_name}.{self.id}"] = dictionary
-
+        # Ensure there are no recursive references
+        if 'id' in dictionary:
+            del dictionary[f'{self.__class__.__name__}.{self.id}']  # Avoiding recursion with ID
         return dictionary
