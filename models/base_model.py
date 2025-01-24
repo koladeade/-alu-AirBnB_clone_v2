@@ -18,12 +18,23 @@ class BaseModel:
 
     def __init__(self, *args, **kwargs):
         """Instantiates a new model"""
+        # Initialize default attributes if no kwargs are provided
         self.id = str(uuid.uuid4())
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
 
         if kwargs:
-            # Convert datetime strings to datetime objects
+            # Define valid attributes for BaseModel
+            valid_attrs = ['id', 'created_at', 'updated_at', '__class__']
+            if hasattr(self.__class__, '__table__'):
+                valid_attrs.extend([col.name for col in self.__class__.__table__.columns])
+
+            # Check for invalid attributes
+            invalid_keys = [key for key in kwargs if key not in valid_attrs]
+            if invalid_keys:
+                raise KeyError(f"Invalid attribute(s): {', '.join(invalid_keys)}")
+
+            # Convert datetime strings to datetime objects if needed
             if 'created_at' in kwargs and isinstance(kwargs['created_at'], str):
                 kwargs['created_at'] = datetime.strptime(kwargs['created_at'], '%Y-%m-%dT%H:%M:%S.%f')
             if 'updated_at' in kwargs and isinstance(kwargs['updated_at'], str):
@@ -49,12 +60,14 @@ class BaseModel:
         """Convert instance into dict format"""
         dictionary = self.__dict__.copy()
         dictionary.pop('_sa_instance_state', None)  # Remove SQLAlchemy state if present
+
+        # Add class name for identifying class
         dictionary['__class__'] = self.__class__.__name__
         dictionary['created_at'] = self.created_at.isoformat()
         dictionary['updated_at'] = self.updated_at.isoformat()
-        return dictionary
 
-    def delete(self):
-        """Deletes the current instance from storage"""
-        from models import storage
-        storage.delete(self)
+        # Handle dynamic class ID in dictionary
+        class_name = self.__class__.__name__
+        dictionary[f"{class_name}.{self.id}"] = dictionary
+
+        return dictionary
