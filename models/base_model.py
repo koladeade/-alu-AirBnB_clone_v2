@@ -40,6 +40,15 @@ class BaseModel:
 
             kwargs.pop('__class__', None)
 
+            if os.getenv('HBNB_TYPE_STORAGE') == 'db':
+                # Check for invalid attributes
+                valid_attrs = self.__class__.__mapper__.attrs.keys()
+                invalid_keys = [key for key in kwargs if key not in valid_attrs]
+                if invalid_keys:
+                    raise KeyError(
+                        f"Invalid attribute(s): {', '.join(invalid_keys)} for {self.__class__.__name__}"
+                    )
+
             self.__dict__.update(kwargs)
 
     def __str__(self):
