@@ -29,6 +29,7 @@ class BaseModel:
             self.created_at = kwargs.pop('created_at', datetime.now())
             self.updated_at = kwargs.pop('updated_at', datetime.now())
 
+            # Convert string datetime to objects
             if isinstance(self.created_at, str):
                 self.created_at = datetime.strptime(
                     self.created_at, '%Y-%m-%dT%H:%M:%S.%f'
@@ -48,6 +49,10 @@ class BaseModel:
                     attr = getattr(self.__class__, attr_name)
                     if isinstance(attr, Column):
                         valid_attrs.append(attr_name)
+                
+                # Allow _sa_instance_state (SQLAlchemy internal)
+                valid_attrs.append('_sa_instance_state')
+                
                 invalid_keys = [k for k in kwargs if k not in valid_attrs]
                 if invalid_keys:
                     error_msg = (
@@ -61,7 +66,7 @@ class BaseModel:
     def __str__(self):
         """Returns a string representation of the instance"""
         cls = (str(type(self)).split('.')[-1]).split('\'')[0]
-        return '[{}] ({}) {}'.format(cls, self.id, self.__dict__)
+        return f'[{cls}] ({self.id}) {self.__dict__}'
 
     def save(self):
         """Updates updated_at with current time when instance is changed"""
@@ -71,10 +76,10 @@ class BaseModel:
 
     def to_dict(self):
         """Convert instance into dict format"""
-        dictionary = {}
-        dictionary.update(self.__dict__)
-        dictionary.update({'__class__':
-                          (str(type(self)).split('.')[-1]).split('\'')[0]})
+        dictionary = self.__dict__.copy()
+        # Remove SQLAlchemy internal state
+        dictionary.pop('_sa_instance_state', None)
+        dictionary['__class__'] = self.__class__.__name__
         dictionary['created_at'] = self.created_at.isoformat()
         dictionary['updated_at'] = self.updated_at.isoformat()
         return dictionary
