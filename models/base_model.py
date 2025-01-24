@@ -29,7 +29,7 @@ class BaseModel:
             self.created_at = kwargs.pop('created_at', datetime.now())
             self.updated_at = kwargs.pop('updated_at', datetime.now())
 
-            # Convert string datetime to objects
+            # Convert string datetime to objects if necessary
             if isinstance(self.created_at, str):
                 self.created_at = datetime.strptime(
                     self.created_at, '%Y-%m-%dT%H:%M:%S.%f'
@@ -41,25 +41,19 @@ class BaseModel:
 
             kwargs.pop('__class__', None)
 
-            # Validate attributes for DBStorage
+            # Validation only for mapped classes in DBStorage
             if os.getenv('HBNB_TYPE_STORAGE') == 'db':
-                valid_attrs = []
-                # Collect all Column attributes in the class
-                for attr_name in dir(self.__class__):
-                    attr = getattr(self.__class__, attr_name)
-                    if isinstance(attr, Column):
-                        valid_attrs.append(attr_name)
-                
-                # Allow _sa_instance_state (SQLAlchemy internal)
-                valid_attrs.append('_sa_instance_state')
-                
-                invalid_keys = [k for k in kwargs if k not in valid_attrs]
-                if invalid_keys:
-                    error_msg = (
-                        f"Invalid attribute(s): {', '.join(invalid_keys)} "
-                        f"for {self.__class__.__name__}"
-                    )
-                    raise KeyError(error_msg)
+                # Check if the class is mapped (has a database table)
+                if hasattr(self.__class__, '__table__'):
+                    valid_attrs = [col.name for col in self.__class__.__table__.columns]
+                    valid_attrs.append('_sa_instance_state')  # Allow SQLAlchemy internal
+                    invalid_keys = [k for k in kwargs if k not in valid_attrs]
+                    if invalid_keys:
+                        error_msg = (
+                            f"Invalid attribute(s): {', '.join(invalid_keys)} "
+                            f"for {self.__class__.__name__}"
+                        )
+                        raise KeyError(error_msg)
 
             self.__dict__.update(kwargs)
 
@@ -77,8 +71,7 @@ class BaseModel:
     def to_dict(self):
         """Convert instance into dict format"""
         dictionary = self.__dict__.copy()
-        # Remove SQLAlchemy internal state
-        dictionary.pop('_sa_instance_state', None)
+        dictionary.pop('_sa_instance_state', None)  # Remove SQLAlchemy internal state
         dictionary['__class__'] = self.__class__.__name__
         dictionary['created_at'] = self.created_at.isoformat()
         dictionary['updated_at'] = self.updated_at.isoformat()
