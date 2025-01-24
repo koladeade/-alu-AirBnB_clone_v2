@@ -40,6 +40,21 @@ class BaseModel:
                     self.updated_at, '%Y-%m-%dT%H:%M:%S.%f'
                 )
 
+            # Validate attributes for DBStorage
+            if os.getenv('HBNB_TYPE_STORAGE') == 'db':
+                valid_attrs = {'id', 'created_at', 'updated_at', '__class__', '_sa_instance_state'}
+                # Add subclass columns if mapped
+                if hasattr(self.__class__, '__table__'):
+                    valid_attrs.update(col.name for col in self.__class__.__table__.columns)
+                
+                invalid_keys = [k for k in kwargs if k not in valid_attrs]
+                if invalid_keys:
+                    error_msg = (
+                        f"Invalid attribute(s): {', '.join(invalid_keys)} "
+                        f"for {self.__class__.__name__}"
+                    )
+                    raise KeyError(error_msg)
+
             kwargs.pop('__class__', None)  # Remove the `__class__` key
             self.__dict__.update(kwargs)
 
@@ -57,7 +72,7 @@ class BaseModel:
     def to_dict(self):
         """Convert instance into dict format"""
         dictionary = self.__dict__.copy()
-        dictionary.pop('_sa_instance_state', None)  # Remove SQLAlchemy instance state
+        dictionary.pop('_sa_instance_state', None)  # Remove SQLAlchemy state
         dictionary['__class__'] = self.__class__.__name__
         dictionary['created_at'] = self.created_at.isoformat()
         dictionary['updated_at'] = self.updated_at.isoformat()
