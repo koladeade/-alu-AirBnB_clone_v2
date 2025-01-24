@@ -40,13 +40,12 @@ class BaseModel:
                     self.updated_at, '%Y-%m-%dT%H:%M:%S.%f'
                 )
 
-            # Validate attributes only for DBStorage
-            if os.getenv('HBNB_TYPE_STORAGE') == 'db':
+            # Validate attributes only for DBStorage and mapped subclasses
+            if os.getenv('HBNB_TYPE_STORAGE') == 'db' and hasattr(self.__class__, '__table__'):
                 valid_attrs = {'id', 'created_at', 'updated_at', '__class__'}
-                if hasattr(self.__class__, '__table__'):
-                    valid_attrs.update(
-                        col.name for col in self.__class__.__table__.columns
-                    )
+                valid_attrs.update(
+                    col.name for col in self.__class__.__table__.columns
+                )
                 valid_attrs.add('_sa_instance_state')  # SQLAlchemy internal state
 
                 invalid_keys = [k for k in kwargs if k not in valid_attrs]
