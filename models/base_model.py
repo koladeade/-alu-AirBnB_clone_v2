@@ -25,15 +25,14 @@ class BaseModel:
             self.updated_at = datetime.now()
             storage.new(self)
         else:
-            # Validate attributes for all model classes
             valid_attrs = ['id', 'created_at', 'updated_at', '__class__']
             
-            # Add specific valid attributes based on the class
             if hasattr(self.__class__, '__table__'):
-                valid_attrs.extend([col.name for col in self.__class__.__table__.columns])
+                valid_attrs.extend([
+                    col.name for col in self.__class__.__table__.columns
+                ])
                 valid_attrs.append('_sa_instance_state')
             
-            # Check for invalid keys
             invalid_keys = [k for k in kwargs if k not in valid_attrs]
             if invalid_keys:
                 error_msg = (
@@ -46,7 +45,6 @@ class BaseModel:
             self.created_at = kwargs.pop('created_at', datetime.now())
             self.updated_at = kwargs.pop('updated_at', datetime.now())
 
-            # Convert string datetime to objects if necessary
             if isinstance(self.created_at, str):
                 self.created_at = datetime.strptime(
                     self.created_at, '%Y-%m-%dT%H:%M:%S.%f'
@@ -73,7 +71,7 @@ class BaseModel:
     def to_dict(self):
         """Convert instance into dict format"""
         dictionary = self.__dict__.copy()
-        dictionary.pop('_sa_instance_state', None)  # Remove SQLAlchemy internal state
+        dictionary.pop('_sa_instance_state', None)
         dictionary['__class__'] = self.__class__.__name__
         dictionary['created_at'] = self.created_at.isoformat()
         dictionary['updated_at'] = self.updated_at.isoformat()
