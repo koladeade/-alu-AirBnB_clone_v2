@@ -58,7 +58,7 @@ class BaseModel:
                 )
 
             kwargs.pop('__class__', None)  # Remove the `__class__` key
-            self.__dict__.update(kwargs)
+            self.__dict__.update(kwargs)  # Update the instance with the passed kwargs
 
     def __str__(self):
         """Returns a string representation of the instance"""
