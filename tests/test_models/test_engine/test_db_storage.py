@@ -4,7 +4,9 @@ import unittest
 from models.state import State
 from models.engine.db_storage import DBStorage
 
+
 storage = DBStorage()
+
 
 @unittest.skipIf(os.getenv('HBNB_TYPE_STORAGE') != 'db', 'DB Storage test')
 class TestDBStorage(unittest.TestCase):
@@ -36,17 +38,17 @@ class TestDBStorage(unittest.TestCase):
         self.assertEqual(self.session.query(State).count(), initial_count + 1)
         self.session.delete(new_state)
         self.session.commit()
-        
+
     def test_delete_state(self):
         """Testing deleting a State from the Database"""
         initial_count = self.session.query(State).count()
-        
+
         new_state = State(name="California")
         self.session.add(new_state)
         self.session.commit()
-        
+
         self.assertEqual(self.session.query(State).count(), initial_count + 1)
-        
+
         # Deletes then verifies removal
         self.session.delete(new_state)
         self.session.commit()
@@ -57,12 +59,12 @@ class TestDBStorage(unittest.TestCase):
         new_state = State(name="Nevada")
         self.session.add(new_state)
         self.session.commit()
-        
+
         # Retrieves and verifies retrieval
         retrieved_state = self.session.query(State).get(new_state.id)
         self.assertEqual(retrieved_state.id, new_state.id)
         self.assertEqual(retrieved_state.name, "Nevada")
-        
+
         # Cleanup
         self.session.delete(new_state)
         self.session.commit()

@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from models.base_model import Base
 import os
 
+
 class DBStorage:
     __engine = None
     __session = None
@@ -53,7 +54,7 @@ class DBStorage:
             key = f"{cls.__name__}.{id}"
             return self.all(cls).get(key)
         return None
-    
+
     def reload(self):
         """Creates tables and a session"""
         Base.metadata.create_all(self.__engine)
