@@ -25,18 +25,40 @@ class BaseModel:
             self.updated_at = datetime.now()
             storage.new(self)
         else:
-            for key, value in kwargs.items():
-                if key == "__class__":
-                    continue  # Skip the __class__ attribute
-                if key == "created_at" and isinstance(value, str):
-                    value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
-                elif key == "updated_at" and isinstance(value, str):
-                    value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
-                setattr(self, key, value)
+            # Define valid attributes for the class, including dynamic DB columns
+            valid_attrs = {'id', 'created_at', 'updated_at', '__class__'}
+            if hasattr(self.__class__, '__table__'):
+                valid_attrs.update(
+                    col.name for col in self.__class__.__table__.columns
+                )
+                valid_attrs.add('_sa_instance_state')
 
-            self.id = kwargs.get('id', str(uuid.uuid4()))
-            self.created_at = kwargs.get('created_at', datetime.now())
-            self.updated_at = kwargs.get('updated_at', datetime.now())
+            # Detect and raise errors for invalid attributes in kwargs
+            invalid_keys = [k for k in kwargs if k not in valid_attrs]
+            if invalid_keys:
+                error_msg = (
+                    f"Invalid attribute(s): {', '.join(invalid_keys)} "
+                    f"for {self.__class__.__name__}"
+                )
+                raise KeyError(error_msg)
+
+            # Assign default or passed values to attributes
+            self.id = kwargs.pop('id', str(uuid.uuid4()))
+            self.created_at = kwargs.pop('created_at', datetime.now())
+            self.updated_at = kwargs.pop('updated_at', datetime.now())
+
+            # Convert datetime strings to datetime objects if needed
+            if isinstance(self.created_at, str):
+                self.created_at = datetime.strptime(
+                    self.created_at, '%Y-%m-%dT%H:%M:%S.%f'
+                )
+            if isinstance(self.updated_at, str):
+                self.updated_at = datetime.strptime(
+                    self.updated_at, '%Y-%m-%dT%H:%M:%S.%f'
+                )
+
+            kwargs.pop('__class__', None)  # Remove the `__class__` key
+            self.__dict__.update(kwargs)
 
     def __str__(self):
         """Returns a string representation of the instance"""
@@ -44,7 +66,7 @@ class BaseModel:
         return f'[{cls}] ({self.id}) {self.__dict__}'
 
     def save(self):
-        """Updates updated_at with current time when instance is changed"""
+        """Updates `updated_at` with the current time when instance is changed"""
         from models import storage
         self.updated_at = datetime.now()
         storage.save()
@@ -52,8 +74,13 @@ class BaseModel:
     def to_dict(self):
         """Convert instance into dict format"""
         dictionary = self.__dict__.copy()
-        dictionary.pop('_sa_instance_state', None)
+        dictionary.pop('_sa_instance_state', None)  # Remove SQLAlchemy instance state
         dictionary['__class__'] = self.__class__.__name__
         dictionary['created_at'] = self.created_at.isoformat()
         dictionary['updated_at'] = self.updated_at.isoformat()
         return dictionary
+
+    def delete(self):
+        """Deletes the current instance from storage"""
+        from models import storage
+        storage.delete(self)
