@@ -8,13 +8,14 @@ import os
 
 Base = declarative_base()
 
+
 class BaseModel:
     """A base class for all hbnb models"""
     if os.getenv('HBNB_TYPE_STORAGE') == 'db':
         id = Column(String(60), primary_key=True, nullable=False)
         created_at = Column(DateTime, default=datetime.now, nullable=False)
         updated_at = Column(DateTime, default=datetime.now, nullable=False)
-        
+
     def __init__(self, *args, **kwargs):
         """Instantiates a new model"""
         if not kwargs:
@@ -27,7 +28,7 @@ class BaseModel:
             self.id = kwargs.pop('id', str(uuid.uuid4()))
             self.created_at = kwargs.pop('created_at', datetime.now())
             self.updated_at = kwargs.pop('updated_at', datetime.now())
-            
+
             if isinstance(self.created_at, str):
                 self.created_at = datetime.strptime(
                     self.created_at, '%Y-%m-%dT%H:%M:%S.%f'
