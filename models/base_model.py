@@ -25,23 +25,6 @@ class BaseModel:
             self.updated_at = datetime.now()
             storage.new(self)
         else:
-            # Define valid attributes for the class, including dynamic DB columns
-            valid_attrs = {'id', 'created_at', 'updated_at', '__class__'}
-            if hasattr(self.__class__, '__table__'):
-                valid_attrs.update(
-                    col.name for col in self.__class__.__table__.columns
-                )
-                valid_attrs.add('_sa_instance_state')
-
-            # Detect and raise errors for invalid attributes in kwargs
-            invalid_keys = [k for k in kwargs if k not in valid_attrs]
-            if invalid_keys:
-                error_msg = (
-                    f"Invalid attribute(s): {', '.join(invalid_keys)} "
-                    f"for {self.__class__.__name__}"
-                )
-                raise KeyError(error_msg)
-
             # Assign default or passed values to attributes
             self.id = kwargs.pop('id', str(uuid.uuid4()))
             self.created_at = kwargs.pop('created_at', datetime.now())
@@ -58,7 +41,7 @@ class BaseModel:
                 )
 
             kwargs.pop('__class__', None)  # Remove the `__class__` key
-            self.__dict__.update(kwargs)  # Update the instance with the passed kwargs
+            self.__dict__.update(kwargs)
 
     def __str__(self):
         """Returns a string representation of the instance"""
