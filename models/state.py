@@ -10,6 +10,6 @@ class State(BaseModel, Base):
     __tablename__ = 'states'
 
     if os.getenv('HBNB_TYPE_STORAGE') == 'db':
-        name = Column(String(128), nullable=False)
+        name = Column(String(128), nullable=False, default="")
     else:
         name = ""
