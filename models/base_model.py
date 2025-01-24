@@ -25,13 +25,22 @@ class BaseModel:
             self.updated_at = datetime.now()
             storage.new(self)
         else:
-            # Allowed keys for BaseModel
-            allowed_keys = ['id', 'created_at', 'updated_at', '__class__']
+            # Validate attributes for all model classes
+            valid_attrs = ['id', 'created_at', 'updated_at', '__class__']
+            
+            # Add specific valid attributes based on the class
+            if hasattr(self.__class__, '__table__'):
+                valid_attrs.extend([col.name for col in self.__class__.__table__.columns])
+                valid_attrs.append('_sa_instance_state')
             
             # Check for invalid keys
-            invalid_keys = [k for k in kwargs if k not in allowed_keys]
+            invalid_keys = [k for k in kwargs if k not in valid_attrs]
             if invalid_keys:
-                raise KeyError(f"Invalid attribute(s): {', '.join(invalid_keys)} for BaseModel")
+                error_msg = (
+                    f"Invalid attribute(s): {', '.join(invalid_keys)} "
+                    f"for {self.__class__.__name__}"
+                )
+                raise KeyError(error_msg)
 
             self.id = kwargs.pop('id', str(uuid.uuid4()))
             self.created_at = kwargs.pop('created_at', datetime.now())
@@ -48,9 +57,7 @@ class BaseModel:
                 )
 
             kwargs.pop('__class__', None)
-            # Prevent adding any other attributes for BaseModel
-            if kwargs:
-                raise KeyError(f"Invalid attribute(s): {', '.join(kwargs.keys())} for BaseModel")
+            self.__dict__.update(kwargs)
 
     def __str__(self):
         """Returns a string representation of the instance"""
