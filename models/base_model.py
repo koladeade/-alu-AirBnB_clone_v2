@@ -25,15 +25,15 @@ class BaseModel:
             self.updated_at = datetime.now()
             storage.new(self)
         else:
-            # Dynamically set attributes from kwargs
             for key, value in kwargs.items():
+                if key == "__class__":
+                    continue  # Skip the __class__ attribute
                 if key == "created_at" and isinstance(value, str):
                     value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
                 elif key == "updated_at" and isinstance(value, str):
                     value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
                 setattr(self, key, value)
 
-            # Set default values for id, created_at, and updated_at if not provided
             self.id = kwargs.get('id', str(uuid.uuid4()))
             self.created_at = kwargs.get('created_at', datetime.now())
             self.updated_at = kwargs.get('updated_at', datetime.now())
